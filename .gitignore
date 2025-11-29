@@ -38,7 +38,7 @@ env/
 .DS_Store
 Thumbs.db
 
-# YOLO
+# weights
 *.pt
 runs/
 weights/
