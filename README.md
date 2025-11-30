@@ -2,6 +2,13 @@
  
 RT-DETR(Real-Time Detection Transformer) 모델을 사용하여 이미지에서 객체를 탐지한 후 총 객채 수, 각 객체의 수를 반환해줍니다.
 
+## 기술 스택
+
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Ultralytics](https://img.shields.io/badge/Ultralytics-RT--DETR-00C9FF?style=for-the-badge)
+![Pydantic](https://img.shields.io/badge/Pydantic-2.0+-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
+
 ## 프로젝트 구조
 
 ```
@@ -34,13 +41,6 @@ assignment/
 
 - **객체 탐지**: 이미지를 업로드하여 RT-DETR 모델로 객체 탐지
 - **헬스 체크**: 서버 및 모델 로드 상태 확인
-
-## 기술 스택
-
-- **프레임워크**: FastAPI 0.104.1
-- **AI 모델**: RT-DETR (Ultralytics)
-- **데이터 검증**: Pydantic
-- **서버**: Uvicorn
 
 ## 설치 및 실행
 
@@ -223,5 +223,5 @@ API는 다음과 같은 에러를 처리합니다:
 
 - Python 3.11+
 - FastAPI
-- PyTorch (MPS 또는 CPU)
+- PyTorch (MPS)
 - Ultralytics RTDETR
