@@ -1,5 +1,3 @@
-# 이미지 처리 유틸리티
-
 from PIL import Image
 import io
 from fastapi import HTTPException

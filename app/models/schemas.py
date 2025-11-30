@@ -1,4 +1,3 @@
-# Pydantic 스키마 정의
 from typing import List, Dict
 from pydantic import BaseModel
 
