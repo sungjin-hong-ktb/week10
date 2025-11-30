@@ -65,7 +65,7 @@ python main.py
 또는
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --reload
 ```
 
 서버가 `http://localhost:8000`에서 실행됩니다.
