@@ -221,7 +221,7 @@ print(response.json())
 RT-DETR 모델은 다음 파라미터로 설정되어 있습니다:
 
 - **모델**: RT-DETR Large (`rtdetr-l.pt`)
-- **Confidence Threshold**: 0.50
+- **Confidence Threshold**: 0.60
 - **IoU Threshold**: 0.70
 - **Device**: MPS (Apple Silicon) → CUDA (NVIDIA GPU) → CPU (자동 선택)
 
