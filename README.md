@@ -222,6 +222,3 @@ API는 다음과 같은 에러를 처리합니다:
 ## 개발 환경
 
 - Python 3.11+
-- FastAPI
-- PyTorch (MPS)
-- Ultralytics RTDETR
