@@ -1,10 +1,9 @@
 # API 라우터 (엔드포인트 정의)
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, UploadFile, HTTPException
 
 from app.models.schemas import DetectionResponse, HealthResponse, DetectionSummary
 from app.controllers.rtdetr_controller import rtdetr_service
 from app.utils.image_utils import load_image, validate_image
-from app.exceptions.custom_exceptions import APIException
 
 router = APIRouter()
 
@@ -24,7 +23,7 @@ async def detect_objects(file: UploadFile = File(...)):
     """
     # 1. 모델 확인
     if not rtdetr_service.is_loaded:
-        raise APIException("모델이 로드되지 않았습니다", 503)
+        raise HTTPException(status_code=503, detail="모델이 로드되지 않았습니다")
 
     # 2. 파일 읽기
     file_content = await file.read()

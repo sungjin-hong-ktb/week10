@@ -6,7 +6,7 @@ RT-DETR(Real-Time Detection Transformer) 모델을 사용하여 이미지에서 
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Ultralytics](https://img.shields.io/badge/Ultralytics-RT--DETR-00C9FF?style=for-the-badge)
+![Ultralytics](https://img.shields.io/badge/Ultralytics-RT--DETR-0F4C81?style=for-the-badge)
 ![Pydantic](https://img.shields.io/badge/Pydantic-2.0+-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
 
 ## 프로젝트 구조
@@ -18,10 +18,6 @@ assignment/
 │   ├── controllers/         # 비즈니스 로직
 │   │   ├── __init__.py
 │   │   └── rtdetr_controller.py
-│   ├── exceptions/          # 예외 처리
-│   │   ├── __init__.py
-│   │   ├── custom_exceptions.py
-│   │   └── handlers.py
 │   ├── models/              # 데이터 모델 및 스키마
 │   │   ├── __init__.py
 │   │   └── schemas.py
@@ -192,7 +188,6 @@ print(response.json())
 2. **Controllers** (`app/controllers/`): 비즈니스 로직 및 모델 처리
 3. **Models** (`app/models/`): 데이터 스키마 정의
 4. **Utils** (`app/utils/`): 이미지 처리 유틸리티
-5. **Exceptions** (`app/exceptions/`): 예외 처리 및 에러 핸들링
 
 ### 주요 컴포넌트
 

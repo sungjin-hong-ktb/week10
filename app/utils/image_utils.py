@@ -2,7 +2,7 @@
 
 from PIL import Image
 import io
-from app.exceptions.custom_exceptions import APIException
+from fastapi import HTTPException
 
 
 def validate_image(file_content: bytes) -> None:
@@ -15,12 +15,12 @@ def validate_image(file_content: bytes) -> None:
     """
     # 빈 파일 체크
     if len(file_content) == 0:
-        raise APIException("빈 파일입니다", 400)
+        raise HTTPException(status_code=400, detail="빈 파일입니다")
 
     # 파일 크기 체크 (10MB)
     max_size = 10 * 1024 * 1024
     if len(file_content) > max_size:
-        raise APIException("파일이 너무 큽니다 (최대 10MB)", 400)
+        raise HTTPException(status_code=400, detail="파일이 너무 큽니다 (최대 10MB)")
 
 
 def load_image(image_bytes: bytes) -> Image.Image:
@@ -38,4 +38,4 @@ def load_image(image_bytes: bytes) -> Image.Image:
         return image
 
     except Exception as e:
-        raise APIException(f"이미지 로드 실패: {str(e)}", 400)
+        raise HTTPException(status_code=400, detail=f"이미지 로드 실패: {str(e)}")
