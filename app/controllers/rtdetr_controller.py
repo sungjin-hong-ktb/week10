@@ -1,12 +1,14 @@
 # RT-DETR 서비스 (비즈니스 로직)
 import os
 
-from typing import List
-from PIL import Image
 import torch
+from PIL import Image
+from typing import List
 from ultralytics import RTDETR
+from fastapi import HTTPException
 
-from app.models.schemas import DetectedObject, BoundingBox
+from app.models.schemas import DetectedObject, BoundingBox, DetectionResponse, DetectionSummary
+from app.utils.image_utils import load_image, validate_image
 
 # PyTorch 설정
 try:
@@ -51,7 +53,15 @@ class RTDETRService:
             self._model.to(self._device)
 
     def predict(self, image: Image.Image) -> List[DetectedObject]:
-        """이미지에서 객체 탐지"""
+        """
+        이미지에서 객체 탐지
+        
+        Args:
+            image: PIL 이미지 객체
+
+        Returns:
+            List[DetectedObject]: 탐지된 객체 목록
+        """
         results = self._model.predict(
             source=image, 
             device=self._device, 
@@ -87,6 +97,48 @@ class RTDETRService:
     def is_loaded(self) -> bool:
         """모델 로드 여부"""
         return self._model is not None
+
+    def detect_objects(self, file_content: bytes) -> DetectionResponse:
+        """
+        객체 탐지 비즈니스 로직
+
+        Args:
+            file_content: 이미지 파일 바이트 데이터
+
+        Returns:
+            DetectionResponse: 탐지 결과 및 요약
+
+        Raises:
+            HTTPException: 모델 미로드 또는 이미지 검증 실패 시
+        """
+        # 1. 모델 로드 확인
+        if not self.is_loaded:
+            raise HTTPException(status_code=503, detail="모델이 로드되지 않았습니다")
+
+        # 2. 이미지 검증
+        validate_image(file_content)
+
+        # 3. 이미지 로드
+        image = load_image(file_content)
+
+        # 4. 객체 탐지
+        detections = self.predict(image)
+
+        # 5. 결과 요약 생성
+        class_counts = {}
+        for d in detections:
+            class_counts[d.class_name] = class_counts.get(d.class_name, 0) + 1
+
+        summary = DetectionSummary(
+            total_detections=len(detections),
+            class_counts=class_counts
+        )
+
+        # 6. 응답 생성
+        return DetectionResponse(
+            summary=summary,
+            detections=detections
+        )
 
 
 rtdetr_service = RTDETRService()
