@@ -1,6 +1,6 @@
 # RT-DETR 객체 탐지 API
- 
-RT-DETR(Real-Time Detection Transformer) 모델을 사용하여 이미지에서 객체를 탐지한 후 총 객채 수, 각 객체의 수를 반환해줍니다.
+
+RT-DETR(Real-Time Detection Transformer) 모델을 사용하여 이미지에서 객체를 탐지한 후 총 객체 수, 각 객체의 수를 반환해줍니다.
 
 ## 기술 스택
 
@@ -15,21 +15,22 @@ RT-DETR(Real-Time Detection Transformer) 모델을 사용하여 이미지에서 
 assignment/
 ├── app/
 │   ├── __init__.py
-│   ├── controllers/         # 비즈니스 로직
+│   ├── controllers/              # 비즈니스 로직 및 모델 관리
 │   │   ├── __init__.py
-│   │   └── rtdetr_controller.py
-│   ├── models/              # 데이터 모델 및 스키마
+│   │   └── rtdetr_controller.py  # RT-DETR 모델 로딩 및 객체 탐지
+│   ├── models/                   # 데이터 스키마 정의
 │   │   ├── __init__.py
-│   │   └── schemas.py
-│   ├── routers/             # API 엔드포인트
+│   │   └── schemas.py            # Pydantic 응답 모델
+│   ├── routers/                  # API 엔드포인트 정의
 │   │   ├── __init__.py
-│   │   └── rtdetr_routers.py
-│   └── utils/               # 유틸리티 함수
+│   │   └── rtdetr_routers.py     # 탐지 및 헬스체크 라우터
+│   └── utils/                    # 유틸리티 함수
 │       ├── __init__.py
-│       └── image_utils.py
-├── main.py                  # FastAPI 애플리케이션 진입점
-├── requirements.txt         # Python 의존성
-├── rtdetr-l.pt              # RT-DETR 모델 가중치
+│       └── image_utils.py        # 이미지 검증 및 로드
+├── main.py                       # FastAPI 애플리케이션 진입점
+├── requirements.txt              # Python 의존성
+├── rtdetr-l.pt                   # RT-DETR 모델 가중치 (다운로드 필요)
+├── .env                          # 환경 변수
 └── .gitignore
 ```
 
@@ -37,6 +38,8 @@ assignment/
 
 - **객체 탐지**: 이미지를 업로드하여 RT-DETR 모델로 객체 탐지
 - **헬스 체크**: 서버 및 모델 로드 상태 확인
+- **자동 이미지 검증**: 파일 크기(최대 10MB) 및 형식 검증
+- **FastAPI 자동 문서화**: Swagger UI를 통한 API 테스트
 
 ## 설치 및 실행
 
@@ -79,8 +82,8 @@ API 정보 및 사용 가능한 엔드포인트 목록을 반환합니다.
 ```json
 {
   "message": "RT-DETR 객체 탐지 API",
-  "docs": "/docs",
-  "health": "/api/v1/health"
+  "docs_url": "/docs",
+  "health_check": "/api/v1/health"
 }
 ```
 
@@ -92,9 +95,9 @@ POST /api/v1/detect
 
 **요청:**
 - Content-Type: `multipart/form-data`
-- Body: `file` (이미지 파일)
+- Body: `file` (이미지 파일, 최대 10MB)
 
-**응답 예시:**
+**성공 응답 (200):**
 ```json
 {
   "success": true,
@@ -127,6 +130,13 @@ POST /api/v1/detect
       }
     }
   ]
+}
+```
+
+**에러 응답:**
+```json
+{
+  "detail": "파일이 너무 큽니다 (최대 10MB)"
 }
 ```
 
@@ -169,51 +179,71 @@ print(response.json())
 ### Postman 테스트
 
 #### 정상 요청
-1. POST http://localhost:8000/api/v1/detect
-2. Body - form-data
-3. Key: file, Type: File
-4. 이미지 파일 선택
+1. `POST http://localhost:8000/api/v1/detect`
+2. Body → form-data
+3. Key: `file`, Type: File
+4. 이미지 파일 선택 후 Send
 
 #### 예외 처리 테스트
-- 파일 없이 요청 → 422 Validation Error
-- 너무 큰 파일 → 400 Bad Request
-- 잘못된 HTTP 메서드 → 405 Method Not Allowed
-- 없는 경로 → 404 Not Found
+- **파일 없이 요청** → `422 Validation Error`
+- **너무 큰 파일 (>10MB)** → `400 Bad Request`
+- **잘못된 이미지 형식** → `400 Bad Request`
+- **모델 미로드 상태** → `503 Service Unavailable`
+- **잘못된 HTTP 메서드** → `405 Method Not Allowed`
+- **없는 경로** → `404 Not Found`
 
 ## 아키텍처
 
-### 계층 구조
-
-1. **Routers** (`app/routers/`): API 엔드포인트 정의
-2. **Controllers** (`app/controllers/`): 비즈니스 로직 및 모델 처리
-3. **Models** (`app/models/`): 데이터 스키마 정의
-4. **Utils** (`app/utils/`): 이미지 처리 유틸리티
-
 ### 주요 컴포넌트
 
-- **RTDETRController**: RT-DETR 모델 관리 및 객체 탐지 수행
-- **Detection Router**: 객체 탐지 및 헬스 체크 엔드포인트
-- **Image Utils**: 이미지 검증 및 로드 유틸리티
+#### 1. `rtdetr_controller.py`
+- RT-DETR 모델 로딩 및 관리
+- 객체 탐지 수행
+- 싱글톤 패턴으로 모델 인스턴스 관리
+
+#### 2. `rtdetr_routers.py`
+- `/api/v1/detect`: 객체 탐지 엔드포인트
+- `/api/v1/health`: 헬스 체크 엔드포인트
+- 요청 검증 및 응답 반환
+
+#### 3. `schemas.py`
+- `DetectionResponse`: 탐지 결과 응답 모델
+- `DetectionSummary`: 탐지 요약 정보
+- `HealthResponse`: 헬스 체크 응답 모델
+- Pydantic을 사용한 자동 검증
+
+#### 4. `image_utils.py`
+- `validate_image()`: 파일 크기 및 형식 검증
+- `load_image()`: 바이트 데이터를 PIL Image로 변환
 
 ## 모델 설정
 
 RT-DETR 모델은 다음 파라미터로 설정되어 있습니다:
 
+- **모델**: RT-DETR Large (`rtdetr-l.pt`)
 - **Confidence Threshold**: 0.50
 - **IoU Threshold**: 0.70
-- **Device**: MPS (Apple Silicon) 또는 CUDA 또는 CPU
+- **Device**: MPS (Apple Silicon) → CUDA (NVIDIA GPU) → CPU (자동 선택)
 
 ## 에러 처리
 
-API는 다음과 같은 에러를 처리합니다:
+API는 FastAPI의 기본 HTTPException을 사용하여 에러를 처리합니다.
 
-- **400**: 잘못된 요청 (이미지 형식, 크기 등)
-- **404**: 페이지를 찾을 수 없음
-- **405**: 허용되지 않는 HTTP 메서드
-- **422**: 유효성 검증 실패
-- **500**: 서버 내부 오류
-- **503**: 모델이 로드되지 않음
+### 에러 응답 형식
+모든 에러는 다음 형식으로 반환됩니다:
+```json
+{
+  "detail": "에러 메시지"
+}
+```
 
-## 개발 환경
+### 상태 코드별 에러
 
-- Python 3.11+
+| 상태 코드 | 설명 | 발생 상황 |
+|---------|------|----------|
+| **400** | Bad Request | 빈 파일, 큰 파일(>10MB), 잘못된 이미지 형식 |
+| **404** | Not Found | 존재하지 않는 경로 |
+| **405** | Method Not Allowed | 허용되지 않는 HTTP 메서드 |
+| **422** | Validation Error | 필수 파라미터 누락 (file 없음) |
+| **500** | Internal Server Error | 예상치 못한 서버 오류 |
+| **503** | Service Unavailable | 모델이 로드되지 않음 |
