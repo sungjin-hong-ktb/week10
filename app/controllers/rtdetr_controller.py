@@ -4,7 +4,7 @@ import torch
 from PIL import Image
 from typing import List
 from ultralytics import RTDETR
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 
 from app.models.schemas import DetectedObject, BoundingBox, DetectionResponse, DetectionSummary
 from app.utils.image_utils import load_image, validate_image
@@ -97,12 +97,12 @@ class RTDETRService:
         """모델 로드 여부"""
         return self._model is not None
 
-    def detect_objects(self, file_content: bytes) -> DetectionResponse:
+    async def detect_objects(self, file: UploadFile) -> DetectionResponse:
         """
         객체 탐지 비즈니스 로직
 
         Args:
-            file_content: 이미지 파일 바이트 데이터
+            file: 이미지 파일 객체 (UploadFile)
 
         Returns:
             DetectionResponse: 탐지 결과 및 요약
@@ -115,10 +115,10 @@ class RTDETRService:
             raise HTTPException(status_code=503, detail="모델이 로드되지 않았습니다")
 
         # 2. 이미지 검증
-        validate_image(file_content)
+        await validate_image(file)
 
         # 3. 이미지 로드
-        image = load_image(file_content)
+        image = load_image(file)
 
         # 4. 객체 탐지
         detections = self.predict(image)

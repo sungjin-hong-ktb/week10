@@ -12,15 +12,12 @@ async def detect_objects(file: UploadFile = File(...)):
     객체 탐지 API
 
     동작 순서:
-    1. 업로드된 파일 읽기
-    2. Controller에서 비즈니스 로직 처리
+    1. 업로드된 파일 객체 받기
+    2. Controller에서 비즈니스 로직 처리 (스트림 방식)
     3. 결과 반환
     """
-    # 1. 파일 읽기
-    file_content = await file.read()
-
-    # 2. Controller 호출
-    return rtdetr_service.detect_objects(file_content)
+    # 1. Controller 호출 (파일 객체 직접 전달)
+    return await rtdetr_service.detect_objects(file)
 
 
 @router.get("/health", response_model=HealthResponse)
