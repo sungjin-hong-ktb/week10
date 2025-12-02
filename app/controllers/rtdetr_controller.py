@@ -7,7 +7,7 @@ from ultralytics import RTDETR
 from fastapi import HTTPException, UploadFile
 
 from app.models.schemas import DetectedObject, BoundingBox, DetectionResponse, DetectionSummary
-from app.utils.image_utils import load_image, validate_image
+from app.utils.image_utils import validate_and_load_image
 
 # PyTorch 설정
 try:
@@ -99,7 +99,7 @@ class RTDETRService:
 
     async def detect_objects(self, file: UploadFile) -> DetectionResponse:
         """
-        객체 탐지 비즈니스 로직
+        객체 탐지 비즈니스 로직 (스트림 방식)
 
         Args:
             file: 이미지 파일 객체 (UploadFile)
@@ -114,16 +114,13 @@ class RTDETRService:
         if not self.is_loaded:
             raise HTTPException(status_code=503, detail="모델이 로드되지 않았습니다")
 
-        # 2. 이미지 검증
-        await validate_image(file)
+        # 2. 스트림 방식으로 이미지 검증 및 로드 (한 번에 처리)
+        image = await validate_and_load_image(file)
 
-        # 3. 이미지 로드
-        image = await load_image(file)
-
-        # 4. 객체 탐지
+        # 3. 객체 탐지
         detections = self.predict(image)
 
-        # 5. 결과 요약 생성
+        # 4. 결과 요약 생성
         class_counts = {}
         for d in detections:
             class_counts[d.class_name] = class_counts.get(d.class_name, 0) + 1
@@ -133,7 +130,7 @@ class RTDETRService:
             class_counts=class_counts
         )
 
-        # 6. 응답 생성
+        # 5. 응답 생성
         return DetectionResponse(
             summary=summary,
             detections=detections
