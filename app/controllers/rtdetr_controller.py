@@ -114,7 +114,7 @@ class RTDETRService:
         if not self.is_loaded:
             raise HTTPException(status_code=503, detail="모델이 로드되지 않았습니다")
 
-        # 2. 스트림 방식으로 이미지 검증 및 로드 (한 번에 처리)
+        # 2. 스트림 방식으로 이미지 검증 및 로드
         image = await validate_and_load_image(file)
 
         # 3. 객체 탐지
