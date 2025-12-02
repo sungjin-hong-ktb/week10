@@ -118,7 +118,7 @@ class RTDETRService:
         await validate_image(file)
 
         # 3. 이미지 로드
-        image = load_image(file)
+        image = await load_image(file)
 
         # 4. 객체 탐지
         detections = self.predict(image)
