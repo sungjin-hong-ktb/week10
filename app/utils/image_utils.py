@@ -32,13 +32,9 @@ async def load_image(file: UploadFile) -> Image.Image:
     UploadFile 객체에서 PIL Image 로드 (비동기 방식)
     """
     try:
-        # 파일 내용을 비동기로 읽기
         content = await file.read()
-
-        # BytesIO로 변환하여 PIL Image 생성
         image = Image.open(io.BytesIO(content))
 
-        # RGB로 변환
         if image.mode != 'RGB':
             image = image.convert('RGB')
 
