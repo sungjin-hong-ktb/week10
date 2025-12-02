@@ -4,8 +4,8 @@ RT-DETR(Real-Time Detection Transformer) 모델을 사용하여 이미지에서 
 
 ## 기술 스택
 
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115.5-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.13+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Ultralytics](https://img.shields.io/badge/Ultralytics-8.3.0+-0F4C81?logo=ultralytics&style=for-the-badge)
 ![Pydantic](https://img.shields.io/badge/Pydantic-2.0+-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
 
@@ -39,6 +39,7 @@ assignment/
 - **객체 탐지**: 이미지를 업로드하여 RT-DETR 모델로 객체 탐지
 - **헬스 체크**: 서버 및 모델 로드 상태 확인
 - **자동 이미지 검증**: 파일 크기(최대 10MB) 및 형식 검증
+- **스트림 방식 파일 처리**: UploadFile을 사용한 메모리 효율적인 파일 처리
 - **FastAPI 자동 문서화**: Swagger UI를 통한 API 테스트
 
 ## 설치 및 실행
@@ -213,8 +214,8 @@ print(response.json())
 - Pydantic을 사용한 자동 검증
 
 #### 4. `image_utils.py`
-- `validate_image()`: 파일 크기 및 형식 검증
-- `load_image()`: 바이트 데이터를 PIL Image로 변환
+- `validate_image()`: 스트림 방식으로 파일 크기 및 형식 검증 (seek 사용)
+- `load_image()`: UploadFile 객체에서 PIL Image로 변환
 
 ## 모델 설정
 
