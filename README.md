@@ -7,7 +7,6 @@ RT-DETR(Real-Time Detection Transformer) 모델을 사용하여 이미지에서 
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.5-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.13+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Ultralytics](https://img.shields.io/badge/Ultralytics-8.3.0+-0F4C81?logo=ultralytics&style=for-the-badge)
-![Pydantic](https://img.shields.io/badge/Pydantic-2.0+-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
 
 ## 프로젝트 구조
 
@@ -17,30 +16,29 @@ assignment/
 │   ├── __init__.py
 │   ├── controllers/              # 비즈니스 로직 및 모델 관리
 │   │   ├── __init__.py
-│   │   └── rtdetr_controller.py  # RT-DETR 모델 로딩 및 객체 탐지
+│   │   └── rtdetr_controller.py
 │   ├── models/                   # 데이터 스키마 정의
 │   │   ├── __init__.py
-│   │   └── schemas.py            # Pydantic 응답 모델
+│   │   └── schemas.py
 │   ├── routers/                  # API 엔드포인트 정의
 │   │   ├── __init__.py
-│   │   └── rtdetr_routers.py     # 탐지 및 헬스체크 라우터
+│   │   └── rtdetr_routers.py 
 │   └── utils/                    # 유틸리티 함수
 │       ├── __init__.py
-│       └── image_utils.py        # 이미지 검증 및 로드
+│       └── image_utils.py        # 이미지 검증 및 로드 (비동기 스트림)
 ├── main.py                       # FastAPI 애플리케이션 진입점
 ├── requirements.txt              # Python 의존성
-├── rtdetr-l.pt                   # RT-DETR 모델 가중치 (다운로드 필요)
-├── .env                          # 환경 변수
+├── rtdetr-l.pt                   # RT-DETR 모델 가중치 파일
+├── .env                          # 환경 변수 (MODEL_PATH 등)
 └── .gitignore
 ```
 
 ## 주요 기능
 
-- **객체 탐지**: 이미지를 업로드하여 RT-DETR 모델로 객체 탐지
-- **헬스 체크**: 서버 및 모델 로드 상태 확인
-- **자동 이미지 검증**: 파일 크기(최대 10MB) 및 형식 검증
-- **스트림 방식 파일 처리**: UploadFile을 사용한 메모리 효율적인 파일 처리
-- **FastAPI 자동 문서화**: Swagger UI를 통한 API 테스트
+- **객체 탐지**: RT-DETR 모델을 사용한 객체 탐지
+- **헬스 체크**: 서버 및 모델 로드 상태 확인 API
+- **비동기 스트림 처리**: 청크 단위(64KB)로 파일을 읽어 메모리 효율적 처리
+- **자동 이미지 검증**: 파일 크기(최대 10MB) 및 형식 자동 검증
 
 ## 설치 및 실행
 
@@ -57,13 +55,14 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+**주요 의존성:**
+- `fastapi==0.115.5`: 웹 프레임워크
+- `ultralytics>=8.3.0`: RT-DETR 모델
+- `pillow==11.0.0`: 이미지 처리
+- `python-multipart==0.0.12`: 파일 업로드 지원
+- `uvicorn[standard]==0.32.1`: ASGI 서버
+
 ### 3. 서버 실행
-
-```bash
-python main.py
-```
-
-또는
 
 ```bash
 uvicorn main:app --reload
@@ -195,36 +194,44 @@ print(response.json())
 
 ## 아키텍처
 
-### 주요 컴포넌트
+### 데이터 흐름
 
-#### 1. `rtdetr_controller.py`
-- RT-DETR 모델 로딩 및 관리
-- 객체 탐지 수행
-- 싱글톤 패턴으로 모델 인스턴스 관리
-
-#### 2. `rtdetr_routers.py`
-- `/api/v1/detect`: 객체 탐지 엔드포인트
-- `/api/v1/health`: 헬스 체크 엔드포인트
-- 요청 검증 및 응답 반환
-
-#### 3. `schemas.py`
-- `DetectionResponse`: 탐지 결과 응답 모델
-- `DetectionSummary`: 탐지 요약 정보
-- `HealthResponse`: 헬스 체크 응답 모델
-- Pydantic을 사용한 자동 검증
-
-#### 4. `image_utils.py`
-- `validate_image()`: 스트림 방식으로 파일 크기 및 형식 검증 (seek 사용)
-- `load_image()`: UploadFile 객체에서 PIL Image로 변환
+```
+1. 클라이언트 요청
+   ↓
+2. FastAPI Router (rtdetr_routers.py)
+   - UploadFile 객체 수신
+   ↓
+3. Controller (rtdetr_controller.py)
+   - detect_objects() 호출
+   ↓
+4. Image Utils (image_utils.py)
+   - validate_and_load_image() 비동기 실행
+   - 청크 단위(64KB)로 스트림 읽기
+   - 파일 크기 검증 (최대 10MB)
+   - PIL Image로 변환
+   ↓
+5. RT-DETR 모델
+   - predict() 실행
+   - 객체 탐지 수행
+   - 결과 파싱 (바운딩 박스, 클래스, 신뢰도)
+   ↓
+6. 응답 생성
+   - DetectionResponse 구성
+   - 요약 정보 생성 (총 개수, 클래스별 개수)
+   ↓
+7. 클라이언트 응답
+```
 
 ## 모델 설정
 
 RT-DETR 모델은 다음 파라미터로 설정되어 있습니다:
 
-- **모델**: RT-DETR Large (`rtdetr-l.pt`)
+- **모델**: RT-DETR (`rtdetr-l.pt`)
 - **Confidence Threshold**: 0.60
 - **IoU Threshold**: 0.70
 - **Device**: MPS (Apple Silicon) → CUDA (NVIDIA GPU) → CPU (자동 선택)
+- **모델 경로**: 환경 변수 `MODEL_PATH`로 설정 가능 (기본값: `rtdetr-l.pt`)
 
 ## 에러 처리
 
